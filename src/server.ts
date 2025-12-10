@@ -1,0 +1,160 @@
+import 'reflect-metadata';
+import express, { Express, Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { config } from '@config/env';
+import { errorHandler } from '@middlewares/errorHandler';
+import { query } from '@utils/db';
+
+// Import routes
+import authRoutes from '@routes/auth.routes';
+import usersRoutes from '@routes/users.routes';
+import kelasRoutes from '@routes/kelas.routes';
+import mapelRoutes from '@routes/mapel.routes';
+import guruRoutes from '@routes/guru.routes';
+import siswaRoutes from '@routes/siswa.routes';
+import materiRoutes from '@routes/materi.routes';
+import tugasRoutes from '@routes/tugas.routes';
+import absensiRoutes from '@routes/absensi.routes';
+import diskusiRoutes from '@routes/diskusi.routes';
+import nilaiRoutes from '@routes/nilai.routes';
+import sppRoutes from '@routes/spp.routes';
+
+const app: Express = express();
+
+// Security & Parsing Middleware
+app.use(helmet());
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// JSON parsing error handler
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  if (err instanceof SyntaxError && 'body' in err) {
+    console.error('[JSON] Parsing error:', err.message);
+    res.status(400).json({
+      success: false,
+      message: 'Invalid JSON in request body',
+      error: err.message,
+      statusCode: 400,
+    });
+    return;
+  }
+  next(err);
+});
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: config.rateLimit.windowMs,
+  max: config.rateLimit.max,
+  message: 'Too many requests from this IP, please try again later.',
+});
+app.use('/api/', limiter);
+
+// Request logging
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    if (req.path !== '/api/health' && duration > 50) {
+      console.log(
+        `[${new Date().toISOString()}] ${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`,
+      );
+    }
+  });
+  next();
+});
+
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/kelas', kelasRoutes);
+app.use('/api/mapel', mapelRoutes);
+app.use('/api/guru', guruRoutes);
+app.use('/api/siswa', siswaRoutes);
+app.use('/api/materi', materiRoutes);
+app.use('/api/tugas', tugasRoutes);
+app.use('/api/absensi', absensiRoutes);
+app.use('/api/diskusi', diskusiRoutes);
+app.use('/api/nilai', nilaiRoutes);
+app.use('/api/spp', sppRoutes);
+
+// Health check endpoint
+app.get('/api/health', (req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: config.nodeEnv,
+  });
+});
+
+// Debug endpoint - test request parsing
+app.post('/api/debug/echo', (req: Request, res: Response) => {
+  res.json({
+    body: req.body,
+    headers: req.headers,
+  });
+});
+
+// 404 handler
+app.use((req: Request, res: Response) => {
+  res.status(404).json({
+    success: false,
+    message: 'Endpoint not found',
+    statusCode: 404,
+  });
+});
+
+// Global error handler
+app.use(errorHandler);
+
+// Start server
+const PORT = config.port;
+
+// Test database connection on startup
+const initServer = async () => {
+  try {
+    await query('SELECT 1');
+    console.log('[DB] Database connection successful');
+
+    const server = app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`Environment: ${config.nodeEnv}`);
+    });
+
+    // Handle unhandled rejections
+    process.on('unhandledRejection', (reason: unknown) => {
+      console.error(
+        '[FATAL] Unhandled rejection:',
+        reason instanceof Error ? reason.message : String(reason),
+      );
+      process.exit(1);
+    });
+
+    process.on('uncaughtException', (error: Error) => {
+      console.error('[FATAL] Uncaught exception:', error.message, error.stack);
+      process.exit(1);
+    });
+
+    return server;
+  } catch (error) {
+    console.error(
+      '[DB] Database connection failed:',
+      error instanceof Error ? error.message : String(error),
+    );
+    console.error('[DB] Make sure PostgreSQL is running and database exists');
+    process.exit(1);
+  }
+};
+
+initServer().catch((error) => {
+  console.error(
+    '[FATAL] Failed to initialize server:',
+    error instanceof Error ? error.message : String(error),
+  );
+  if (error instanceof Error) {
+    console.error('[FATAL] Stack:', error.stack);
+  }
+  process.exit(1);
+});
