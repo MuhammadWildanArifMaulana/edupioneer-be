@@ -1,0 +1,287 @@
+{
+  "info": {
+    "name": "EduPioneer Backend API",
+    "description": "Complete endpoint test suite for EduPioneer LMS backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. AUTH",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health",
+            "header": []
+          }
+        },
+        {
+          "name": "Login (Get Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.environment.set('adminToken', pm.response.json().data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"admin@edupioneer.com\",\"password\":\"admin123\"}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Get Current User (/me)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"siswa@example.com\",\"password\":\"password123\",\"name\":\"Siswa Test\",\"role\":\"siswa\"}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. USERS",
+      "item": [
+        {
+          "name": "List All Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "List Users (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/users?page=1&limit=10"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. KELAS (Classes)",
+      "item": [
+        {
+          "name": "List Kelas",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/kelas"
+          }
+        },
+        {
+          "name": "Create Kelas",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nama\":\"XI IPA 1\",\"tahun_ajaran\":\"2024/2025\",\"semester\":1}"
+            },
+            "url": "{{baseUrl}}/kelas"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. MAPEL (Subjects)",
+      "item": [
+        {
+          "name": "List Mapel",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/mapel"
+          }
+        },
+        {
+          "name": "Create Mapel",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nama\":\"Matematika\"}"
+            },
+            "url": "{{baseUrl}}/mapel"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. GURU (Teachers)",
+      "item": [
+        {
+          "name": "List Guru",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/guru"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. SISWA (Students)",
+      "item": [
+        {
+          "name": "List Siswa",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/siswa"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. MATERI (Materials)",
+      "item": [
+        {
+          "name": "List Materi",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/materi"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. TUGAS (Assignments)",
+      "item": [
+        {
+          "name": "List Tugas",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/tugas"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. ABSENSI (Attendance)",
+      "item": [
+        {
+          "name": "List Absensi",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/absensi"
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. DISKUSI (Discussions)",
+      "item": [
+        {
+          "name": "List Diskusi",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/diskusi"
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. NILAI (Grades)",
+      "item": [
+        {
+          "name": "List Nilai",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/nilai"
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. SPP (School Fees)",
+      "item": [
+        {
+          "name": "List SPP",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/spp"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ERROR TESTS",
+      "item": [
+        {
+          "name": "401 - No Token",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "401 - Invalid Token",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer invalid_token_here" }],
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "404 - Not Found",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/nonexistent"
+          }
+        }
+      ]
+    }
+  ]
+}
