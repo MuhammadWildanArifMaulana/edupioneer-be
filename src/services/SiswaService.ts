@@ -24,6 +24,17 @@ export const getSiswaById = async (id: string) => {
   return result.rows[0];
 };
 
+export const getSiswaByUserId = async (userId: string) => {
+  const result = await query(
+    'SELECT s.id, s.user_id, s.nama, s.kelas_id, u.email, k.nama as kelas_nama FROM siswa s JOIN users u ON s.user_id = u.id LEFT JOIN kelas k ON s.kelas_id = k.id WHERE s.user_id = $1',
+    [userId],
+  );
+  if (result.rows.length === 0) {
+    throw new Error('Siswa not found for this user');
+  }
+  return result.rows[0];
+};
+
 export const createSiswa = async (data: { user_id: string; nama: string; kelas_id?: string }) => {
   const result = await query(
     'INSERT INTO siswa (user_id, nama, kelas_id) VALUES ($1, $2, $3) RETURNING id, user_id, nama, kelas_id',

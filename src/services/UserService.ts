@@ -1,4 +1,49 @@
 import { query } from '@utils/db';
+import { hashPassword } from '@config/bcrypt';
+
+export const createUser = async (data: {
+  email: string;
+  password: string;
+  name: string;
+  role: 'guru' | 'siswa' | 'admin';
+}) => {
+  const { email, password, name, role } = data;
+
+  // Check if user already exists
+  const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
+  if (existingUser.rows.length > 0) {
+    throw new Error('Email already registered');
+  }
+
+  // Hash password
+  const hashedPassword = await hashPassword(password);
+
+  // Insert user
+  const userResult = await query(
+    'INSERT INTO users (email, password, name, role, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING id, email, name, role, created_at',
+    [email, hashedPassword, name, role],
+  );
+
+  const user = userResult.rows[0];
+
+  // If role is siswa, create record in siswa table
+  if (role === 'siswa') {
+    await query('INSERT INTO siswa (user_id, nama) VALUES ($1, $2)', [user.id, name]);
+  }
+
+  // If role is guru, create record in guru table
+  if (role === 'guru') {
+    await query('INSERT INTO guru (user_id, nama) VALUES ($1, $2)', [user.id, name]);
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    created_at: user.created_at,
+  };
+};
 
 export const getAllUsers = async (page: number = 1, limit: number = 10) => {
   const offset = (page - 1) * limit;

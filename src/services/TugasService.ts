@@ -71,6 +71,48 @@ export const getTugasSubmits = async (tugasId: string) => {
   return result.rows;
 };
 
+export const getSubmissionById = async (id: string) => {
+  const result = await query(
+    'SELECT id, tugas_id, siswa_id, file_url, jawaban, submitted_at FROM tugas_submit WHERE id = $1',
+    [id],
+  );
+  if (result.rows.length === 0) {
+    throw new Error('Submission not found');
+  }
+  return result.rows[0];
+};
+
+export const updateSubmission = async (id: string, data: Record<string, any>) => {
+  const allowedFields = ['file_url', 'jawaban'];
+  const updates: string[] = [];
+  const values: any[] = [];
+  let paramIndex = 1;
+
+  for (const field of allowedFields) {
+    if (data[field] !== undefined) {
+      updates.push(`${field} = $${paramIndex}`);
+      values.push(data[field]);
+      paramIndex++;
+    }
+  }
+
+  if (updates.length === 0) {
+    throw new Error('No valid fields to update');
+  }
+
+  values.push(id);
+  const result = await query(
+    `UPDATE tugas_submit SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id, tugas_id, siswa_id, file_url, jawaban, submitted_at`,
+    values,
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error('Submission not found');
+  }
+
+  return result.rows[0];
+};
+
 export const updateTugas = async (id: string, data: Record<string, any>) => {
   const allowedFields = ['judul', 'deskripsi', 'deadline'];
   const updates: string[] = [];

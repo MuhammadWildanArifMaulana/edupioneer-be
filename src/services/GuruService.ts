@@ -70,6 +70,31 @@ export const assignMapel = async (data: {
   mapel_id: string;
   kelas_id: string;
 }) => {
+  // Verify referenced records exist to provide clearer errors
+  const guruRes = await query('SELECT id FROM guru WHERE id = $1', [data.guru_id]);
+  if (guruRes.rows.length === 0) {
+    throw new Error('Guru not found');
+  }
+
+  const mapelRes = await query('SELECT id FROM mapel WHERE id = $1', [data.mapel_id]);
+  if (mapelRes.rows.length === 0) {
+    throw new Error('Mapel not found');
+  }
+
+  const kelasRes = await query('SELECT id FROM kelas WHERE id = $1', [data.kelas_id]);
+  if (kelasRes.rows.length === 0) {
+    throw new Error('Kelas not found');
+  }
+
+  // Prevent duplicate assignment
+  const exists = await query(
+    'SELECT id FROM guru_mapel WHERE guru_id = $1 AND mapel_id = $2 AND kelas_id = $3',
+    [data.guru_id, data.mapel_id, data.kelas_id],
+  );
+  if (exists.rows.length > 0) {
+    throw new Error('Assignment already exists');
+  }
+
   const result = await query(
     'INSERT INTO guru_mapel (guru_id, mapel_id, kelas_id) VALUES ($1, $2, $3) RETURNING id, guru_id, mapel_id, kelas_id',
     [data.guru_id, data.mapel_id, data.kelas_id],

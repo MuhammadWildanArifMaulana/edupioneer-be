@@ -44,6 +44,27 @@ export const createNilai = async (data: {
   nilai: number;
   semester: number;
 }) => {
+  // Verify siswa exists
+  const siswaRes = await query('SELECT id FROM siswa WHERE id = $1', [data.siswa_id]);
+  if (siswaRes.rows.length === 0) {
+    throw new Error('Siswa not found');
+  }
+
+  // Verify guru_mapel exists
+  const guruMapelRes = await query('SELECT id FROM guru_mapel WHERE id = $1', [data.guru_mapel_id]);
+  if (guruMapelRes.rows.length === 0) {
+    throw new Error('Guru_mapel not found');
+  }
+
+  // Check for duplicate (UNIQUE constraint)
+  const exists = await query(
+    'SELECT id FROM nilai_mapel WHERE siswa_id = $1 AND guru_mapel_id = $2 AND semester = $3',
+    [data.siswa_id, data.guru_mapel_id, data.semester],
+  );
+  if (exists.rows.length > 0) {
+    throw new Error('Nilai already exists for this siswa, guru_mapel, and semester');
+  }
+
   const result = await query(
     'INSERT INTO nilai_mapel (siswa_id, guru_mapel_id, nilai, semester) VALUES ($1, $2, $3, $4) RETURNING id, siswa_id, guru_mapel_id, nilai, semester',
     [data.siswa_id, data.guru_mapel_id, data.nilai, data.semester],

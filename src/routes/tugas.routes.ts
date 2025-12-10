@@ -31,12 +31,22 @@ router.post(
   roleMiddleware(['siswa']),
   validateRequest([
     { field: 'tugas_id', type: 'string', required: true },
-    { field: 'siswa_id', type: 'string', required: true },
+    { field: 'siswa_id', type: 'string', required: false },
   ]),
   TugasController.submit,
 );
 
 router.put('/:id', roleMiddleware(['guru']), TugasController.update);
+
+router.put(
+  '/submit/:id',
+  roleMiddleware(['siswa', 'admin']),
+  validateRequest([
+    { field: 'file_url', type: 'string', required: false },
+    { field: 'jawaban', type: 'string', required: false },
+  ]),
+  TugasController.updateSubmit,
+);
 
 router.delete('/:id', roleMiddleware(['guru', 'admin']), TugasController.delete_);
 

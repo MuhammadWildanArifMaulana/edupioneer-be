@@ -3,6 +3,26 @@ import { AuthRequest } from '@middlewares/authMiddleware';
 import * as UserService from '@services/UserService';
 import { sendSuccess, sendError, sendPaginated } from '@utils/response';
 
+export const create = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { email, password, name, role } = req.body;
+
+    if (!email || !password || !name || !role) {
+      sendError(res, 'Missing required fields: email, password, name, role', 400);
+      return;
+    }
+
+    const user = await UserService.createUser({ email, password, name, role });
+    sendSuccess(res, user, 'User created successfully', 201);
+  } catch (error: any) {
+    if (error.message.includes('already registered')) {
+      sendError(res, error.message, 400, error);
+    } else {
+      sendError(res, 'Failed to create user', 500, error);
+    }
+  }
+};
+
 export const getAll = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
