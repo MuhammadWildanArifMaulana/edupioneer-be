@@ -40,6 +40,15 @@ import uploadRoutes from './routes/upload.routes';
 
 const app: Express = express();
 
+// Export app early for serverless platforms so `require('../dist/server')`
+// doesn't fail if DB initialization later throws. Vercel expects a sync
+// export at require-time (it will still call the handler per-request).
+if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  // @ts-ignore - using CommonJS export in TS file for serverless compatibility
+  module.exports = app;
+  console.log('[SERVER] Early-exported express app for serverless runtime');
+}
+
 // Security & Parsing Middleware
 app.use(helmet());
 app.use(cors());

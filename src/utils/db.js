@@ -3,7 +3,7 @@ const { Pool } = require('pg');
 // Read DB config from env to avoid importing TypeScript-only modules
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
+  port: Number.parseInt(process.env.DB_PORT || '5432', 10),
   user: process.env.DB_USERNAME || process.env.PGUSER || 'postgres',
   password: process.env.DB_PASSWORD || process.env.PGPASSWORD || '',
   database: process.env.DB_DATABASE || 'edupioneer_db',
@@ -11,6 +11,18 @@ const dbConfig = {
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
 };
+
+// Enable SSL when explicitly requested by environment variables.
+// Use DB_SSL=true or PGSSLMODE=require or embed `sslmode=require` in DATABASE_URL.
+const useSsl =
+  process.env.DB_SSL === 'true' ||
+  process.env.PGSSLMODE === 'require' ||
+  (process.env.DATABASE_URL && /sslmode=require/.test(process.env.DATABASE_URL));
+
+if (useSsl) {
+  // By default allow self-signed certs unless DB_REJECT_UNAUTHORIZED=false
+  dbConfig.ssl = { rejectUnauthorized: process.env.DB_REJECT_UNAUTHORIZED !== 'false' };
+}
 
 const pool = new Pool(dbConfig);
 
