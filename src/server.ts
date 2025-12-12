@@ -50,7 +50,15 @@ console.log('[SERVER] Express app exported for require()');
 
 // Security & Parsing Middleware
 app.use(helmet());
-app.use(cors());
+// Enable CORS and explicitly allow the `Authorization` header so
+// browser clients can send a Bearer token in requests to Vercel.
+app.use(
+  cors({
+    origin: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Authorization'],
+  }),
+);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
