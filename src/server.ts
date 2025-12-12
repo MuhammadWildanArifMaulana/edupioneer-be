@@ -1,5 +1,18 @@
-import 'module-alias/register';
+import moduleAlias from 'module-alias';
+import path from 'path';
 import 'reflect-metadata';
+
+// Register runtime aliases so imports like '@services/..' resolve whether
+// the app runs from `src/` (tsx/dev/Vercel) or `dist/` (compiled build).
+moduleAlias.addAliases({
+  '@config': path.join(__dirname, 'config'),
+  '@services': path.join(__dirname, 'services'),
+  '@controllers': path.join(__dirname, 'controllers'),
+  '@routes': path.join(__dirname, 'routes'),
+  '@entities': path.join(__dirname, 'entities'),
+  '@utils': path.join(__dirname, 'utils'),
+  '@middlewares': path.join(__dirname, 'middlewares'),
+});
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
