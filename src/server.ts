@@ -87,11 +87,18 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   next(err);
 });
 
-// Rate limiting
+// Rate limiting — use a stable keyGenerator so rate limiter can work behind
+// a known proxy (Vercel). Use `req.ip` which respects `trust proxy`.
 const limiter = rateLimit({
   windowMs: config.rateLimit.windowMs,
   max: config.rateLimit.max,
   message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => {
+    // prefer the Express computed ip (respects trust proxy)
+    return req.ip || (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '';
+  },
 });
 app.use('/api/', limiter);
 

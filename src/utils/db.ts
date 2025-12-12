@@ -1,16 +1,29 @@
 import { Pool, PoolClient, QueryResult } from 'pg';
 import { config } from '../config/env';
 
-const pool = new Pool({
-  host: config.db.host,
-  port: config.db.port,
-  user: config.db.username,
-  password: config.db.password,
-  database: config.db.database,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+// Reuse a global pool in serverless environments to avoid creating a new
+// pool for every module re-evaluation which can exhaust database connections.
+declare global {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  // Allow caching the pool on globalThis
+  var __pgPool__: Pool | undefined;
+}
+
+const createPool = () =>
+  new Pool({
+    host: config.db.host,
+    port: config.db.port,
+    user: config.db.username,
+    password: config.db.password,
+    database: config.db.database,
+    max: Number.parseInt(process.env.DB_MAX_CLIENTS || '10', 10),
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  });
+
+const pool: Pool = globalThis.__pgPool__ ?? createPool();
+// cache for reuse across lambda/container warm invocations
+globalThis.__pgPool__ ??= pool;
 
 pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);
