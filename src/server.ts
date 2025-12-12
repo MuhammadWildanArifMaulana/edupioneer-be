@@ -194,17 +194,19 @@ const initServer = async () => {
   }
 };
 
-initServer().catch((error) => {
-  console.error(
-    '[FATAL] Failed to initialize server:',
-    error instanceof Error ? error.message : String(error),
-  );
-  if (error instanceof Error) {
-    console.error('[FATAL] Stack:', error.stack);
-  }
-  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
-    // re-throw to fail deployment invocation
-    throw error;
-  }
-  process.exit(1);
-});
+if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  initServer().catch((error) => {
+    console.error(
+      '[FATAL] Failed to initialize server:',
+      error instanceof Error ? error.message : String(error),
+    );
+    if (error instanceof Error) {
+      console.error('[FATAL] Stack:', error.stack);
+    }
+    process.exit(1);
+  });
+} else {
+  // In serverless environments we export the `app` early and skip
+  // running the long-lived server initialization (DB checks/listen).
+  console.log('[SERVER] Running in serverless mode — skipping initServer');
+}
