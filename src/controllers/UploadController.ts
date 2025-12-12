@@ -2,14 +2,12 @@ import { Request, Response } from 'express';
 import cloudinary from '@config/cloudinary';
 
 // Upload a single file (expects multer memory storage)
-export const uploadFile = async (req: Request, res: Response): Promise<void> => {
+export const uploadFile = async (req: Request, res: Response): Promise<Response | void> => {
   try {
     // multer sets file on req.file
-    // @ts-ignore
-    const file = req.file;
+    const file = req.file as Express.Multer.File | undefined;
     if (!file) {
-      res.status(400).json({ message: 'No file provided' });
-      return;
+      return res.status(400).json({ message: 'No file provided' });
     }
 
     const streamUpload = (buffer: Buffer) =>
@@ -24,12 +22,11 @@ export const uploadFile = async (req: Request, res: Response): Promise<void> => 
         stream.end(buffer);
       });
 
-    // @ts-ignore
     const result = await streamUpload(file.buffer);
     return res.json({ url: result.secure_url, raw: result });
   } catch (error) {
     console.error('[upload] Error uploading file', error);
-    res.status(500).json({ message: 'Upload failed' });
+    return res.status(500).json({ message: 'Upload failed' });
   }
 };
 

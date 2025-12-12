@@ -4,6 +4,9 @@ import { sendError } from '@utils/response';
 
 export interface AuthRequest extends Request {
   user?: TokenPayload;
+  // Multer may attach a single file or array of files to the request
+  file?: Express.Multer.File;
+  files?: Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[] };
 }
 
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): void => {
