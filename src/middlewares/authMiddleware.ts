@@ -11,10 +11,7 @@ export interface AuthRequest extends Request {
 
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): void => {
   try {
-    // Support common header fallbacks (some clients or proxies may use
-    // `x-access-token`) and keep header checks case-insensitive via
-    // Express `req.headers` (already normalized to lowercase keys).
-    const authHeader = (req.headers.authorization as string) || (req.headers['x-access-token'] as string);
+    const authHeader = req.headers.authorization;
 
     // Optional debug logging to inspect incoming headers when troubleshooting.
     if (!authHeader) {

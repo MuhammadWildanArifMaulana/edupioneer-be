@@ -3,7 +3,7 @@ import path from 'path';
 import 'reflect-metadata';
 
 // Register runtime aliases so imports like '@services/..' resolve whether
-// the app runs from `src/` (ts/dev/Vercel) or `dist/` (compiled build).
+// the app runs from `src/` (tsx/dev/Vercel) or `dist/` (compiled build).
 moduleAlias.addAliases({
   '@config': path.join(__dirname, 'config'),
   '@services': path.join(__dirname, 'services'),
@@ -13,29 +13,195 @@ moduleAlias.addAliases({
   '@utils': path.join(__dirname, 'utils'),
   '@middlewares': path.join(__dirname, 'middlewares'),
 });
-
-import app from './app';
-import { query } from './utils/db';
+import express, { Express, Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { config } from './config/env';
+import { errorHandler } from './middlewares/errorHandler';
+import { query } from './utils/db';
 
-// Export app for serverless platforms (Vercel will `require('../dist/server')`).
-// @ts-ignore - provide CommonJS export for compatibility with Vercel's require
+// Import routes
+import authRoutes from './routes/auth.routes';
+import usersRoutes from './routes/users.routes';
+import kelasRoutes from './routes/kelas.routes';
+import mapelRoutes from './routes/mapel.routes';
+import guruRoutes from './routes/guru.routes';
+import siswaRoutes from './routes/siswa.routes';
+import materiRoutes from './routes/materi.routes';
+import tugasRoutes from './routes/tugas.routes';
+import absensiRoutes from './routes/absensi.routes';
+import diskusiRoutes from './routes/diskusi.routes';
+import nilaiRoutes from './routes/nilai.routes';
+import sppRoutes from './routes/spp.routes';
+import joinRoutes from './routes/join.routes';
+import adminRoutes from './routes/admin.routes';
+import uploadRoutes from './routes/upload.routes';
+
+const app: Express = express();
+
+// When running behind Vercel (or other proxies), enable trusting the
+// proxy so `req.ip` and forwarded headers are respected by middleware
+// such as `express-rate-limit` which otherwise throws when the
+// 'Forwarded' header is present but being ignored.
+// Trust a single proxy (Vercel's edge) rather than enabling permissive
+// trust for all proxies. This avoids express-rate-limit's permissive
+// trust proxy validation while still allowing `X-Forwarded-For` to be
+// used to derive the client IP when behind one known proxy.
+app.set('trust proxy', 1);
+
+// Export app immediately so consumer `require()` gets the handler without
+// triggering DB initialization. We'll only run `initServer()` when the
+// file is executed directly (e.g. `node dist/server.js`) — not when it's
+// required by serverless platforms like Vercel.
+// @ts-ignore - using CommonJS export in TS file for compatibility
 module.exports = app;
 console.log('[SERVER] Express app exported for require()');
 
-// Initialize DB and start listener only when running directly (not required as module)
+// Security & Parsing Middleware
+app.use(helmet());
+// Enable CORS and explicitly allow the `Authorization` header so
+// browser clients can send a Bearer token in requests to Vercel.
+app.use(
+  cors({
+    origin: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Authorization'],
+  }),
+);
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// JSON parsing error handler
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  if (err instanceof SyntaxError && 'body' in err) {
+    console.error('[JSON] Parsing error:', err.message);
+    res.status(400).json({
+      success: false,
+      message: 'Invalid JSON in request body',
+      error: err.message,
+      statusCode: 400,
+    });
+    return;
+  }
+  next(err);
+});
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: config.rateLimit.windowMs,
+  max: config.rateLimit.max,
+  message: 'Too many requests from this IP, please try again later.',
+});
+app.use('/api/', limiter);
+
+// Request logging
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    if (req.path !== '/api/health' && duration > 50) {
+      console.log(
+        `[${new Date().toISOString()}] ${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`,
+      );
+    }
+  });
+  next();
+});
+
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/kelas', kelasRoutes);
+app.use('/api/mapel', mapelRoutes);
+app.use('/api/guru', guruRoutes);
+app.use('/api/siswa', siswaRoutes);
+app.use('/api/materi', materiRoutes);
+app.use('/api/tugas', tugasRoutes);
+app.use('/api/absensi', absensiRoutes);
+app.use('/api/diskusi', diskusiRoutes);
+app.use('/api/nilai', nilaiRoutes);
+app.use('/api/spp', sppRoutes);
+// Public health and debug endpoints must be registered before any routers
+// mounted at '/api' that apply router-level middleware (e.g., router.use(authMiddleware)).
+app.get('/api/health', (req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: config.nodeEnv,
+  });
+});
+
+// Debug endpoint - test request parsing and headers
+app.post('/api/debug/echo', (req: Request, res: Response) => {
+  res.json({
+    body: req.body,
+    headers: req.headers,
+  });
+});
+
+// No-op favicon handler so requests to `/favicon.ico` don't get routed
+// into routers that require authentication and return 401.
+// Serve a small inline SVG favicon for requests rewritten to `/api/*` on Vercel.
+// Returning an actual image avoids 401s and provides a nicer UX than 204.
+const _faviconSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#0ea5a4"/>
+  <text x="50%" y="55%" font-size="36" font-family="Arial, Helvetica, sans-serif" fill="#fff" text-anchor="middle" alignment-baseline="middle">E</text>
+</svg>`;
+
+app.get('/api/favicon.ico', (_req: Request, res: Response) => {
+  res.type('image/svg+xml').send(_faviconSvg);
+});
+
+app.get('/api/favicon.png', (_req: Request, res: Response) => {
+  res.type('image/svg+xml').send(_faviconSvg);
+});
+// joinRoutes contains routes like /kelas/:id/join-requests and /join-requests/:id
+app.use('/api', joinRoutes);
+app.use('/api', uploadRoutes);
+app.use('/api', adminRoutes);
+
+// 404 handler
+app.use((req: Request, res: Response) => {
+  res.status(404).json({
+    success: false,
+    message: 'Endpoint not found',
+    statusCode: 404,
+  });
+});
+
+// Global error handler
+app.use(errorHandler);
+
+// Start server or export handler for serverless platforms (e.g., Vercel)
+const PORT = config.port;
+
 const initServer = async () => {
   try {
     await query('SELECT 1');
     console.log('[DB] Database connection successful');
 
-    const server = app.listen(config.port, () => {
-      console.log(`Server running on http://localhost:${config.port}`);
+    // If running on Vercel (or other serverless platforms), export a handler
+    // instead of calling app.listen. Vercel sets the VERCEL env var for builds.
+    if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+      // @ts-ignore
+      module.exports = app;
+      console.log('[SERVER] Exported express app as serverless handler');
+      return null as unknown as ReturnType<typeof app.listen>;
+    }
+
+    const server = app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
       console.log(`Environment: ${config.nodeEnv}`);
     });
 
+    // Handle unhandled rejections and uncaught exceptions in long-running server
     process.on('unhandledRejection', (reason: unknown) => {
-      console.error('[FATAL] Unhandled rejection:', reason instanceof Error ? reason.message : String(reason));
+      console.error(
+        '[FATAL] Unhandled rejection:',
+        reason instanceof Error ? reason.message : String(reason),
+      );
       process.exit(1);
     });
 
@@ -46,7 +212,13 @@ const initServer = async () => {
 
     return server;
   } catch (error) {
-    console.error('[DB] Database connection failed:', error instanceof Error ? error.message : String(error));
+    console.error(
+      '[DB] Database connection failed:',
+      error instanceof Error ? error.message : String(error),
+    );
+    console.error('[DB] Make sure PostgreSQL is running and database exists');
+    // In serverless environment, throwing allows the platform to surface the error
+    // rather than exiting the process.
     if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
       throw error;
     }
@@ -55,11 +227,18 @@ const initServer = async () => {
 };
 
 if (require.main === module) {
+  // Running directly (node dist/server.js) — initialize DB and start server.
   initServer().catch((error) => {
-    console.error('[FATAL] Failed to initialize server:', error instanceof Error ? error.message : String(error));
-    if (error instanceof Error) console.error('[FATAL] Stack:', error.stack);
+    console.error(
+      '[FATAL] Failed to initialize server:',
+      error instanceof Error ? error.message : String(error),
+    );
+    if (error instanceof Error) {
+      console.error('[FATAL] Stack:', error.stack);
+    }
     process.exit(1);
   });
 } else {
+  // Required as a module (e.g., by Vercel) — do not init server here.
   console.log('[SERVER] Required as module — skipping initServer');
 }
