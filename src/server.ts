@@ -40,6 +40,12 @@ import uploadRoutes from './routes/upload.routes';
 
 const app: Express = express();
 
+// When running behind Vercel (or other proxies), enable trusting the
+// proxy so `req.ip` and forwarded headers are respected by middleware
+// such as `express-rate-limit` which otherwise throws when the
+// 'Forwarded' header is present but being ignored.
+app.set('trust proxy', true);
+
 // Export app immediately so consumer `require()` gets the handler without
 // triggering DB initialization. We'll only run `initServer()` when the
 // file is executed directly (e.g. `node dist/server.js`) — not when it's
