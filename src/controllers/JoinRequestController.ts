@@ -19,7 +19,7 @@ export const create = async (req: AuthRequest, res: Response) => {
     if (siswa.kelas_id) return sendError(res, 'Siswa already enrolled in a class', 400);
 
     const created = await JoinRequestService.createJoinRequest(siswa.id, kelasId);
-    return sendSuccess(res, 'Request created', created);
+    return sendSuccess(res, created, 'Request created');
   } catch (err) {
     return sendError(res, err instanceof Error ? err.message : 'Error', 400);
   }
@@ -41,7 +41,7 @@ export const listByKelas = async (req: AuthRequest, res: Response) => {
     }
 
     const list = await JoinRequestService.getJoinRequestsByKelas(kelasId);
-    return sendSuccess(res, 'OK', list);
+    return sendSuccess(res, list, 'OK');
   } catch (err) {
     return sendError(res, err instanceof Error ? err.message : 'Error', 400);
   }
@@ -53,7 +53,7 @@ export const listForGuru = async (req: AuthRequest, res: Response) => {
     if (req.user.role !== 'guru' && req.user.role !== 'admin')
       return sendError(res, 'Forbidden', 403);
     const list = await JoinRequestService.getJoinRequestsForGuru(req.user.id);
-    return sendSuccess(res, 'OK', list);
+    return sendSuccess(res, list, 'OK');
   } catch (err) {
     return sendError(res, err instanceof Error ? err.message : 'Error', 400);
   }
@@ -83,7 +83,7 @@ export const decide = async (req: AuthRequest, res: Response) => {
     }
 
     const updated = await JoinRequestService.decideJoinRequest(id, action);
-    return sendSuccess(res, 'OK', updated);
+    return sendSuccess(res, updated, 'OK');
   } catch (err) {
     return sendError(res, err instanceof Error ? err.message : 'Error', 400);
   }
