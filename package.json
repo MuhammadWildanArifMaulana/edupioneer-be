@@ -22,6 +22,15 @@
   ],
   "author": "",
   "license": "ISC",
+  "_moduleAliases": {
+    "@config": "dist/config",
+    "@services": "dist/services",
+    "@controllers": "dist/controllers",
+    "@routes": "dist/routes",
+    "@entities": "dist/entities",
+    "@utils": "dist/utils",
+    "@middlewares": "dist/middlewares"
+  },
   "dependencies": {
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
@@ -38,6 +47,7 @@
     "cloudinary": "^1.32.0",
     "pino": "^10.1.0",
     "reflect-metadata": "^0.2.2",
+    "module-alias": "^2.2.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
     "typeorm": "^0.3.19"
