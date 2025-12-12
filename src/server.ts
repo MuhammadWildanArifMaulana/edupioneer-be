@@ -139,6 +139,10 @@ app.post('/api/debug/echo', (req: Request, res: Response) => {
     headers: req.headers,
   });
 });
+
+// No-op favicon handler so requests to `/favicon.ico` don't get routed
+// into routers that require authentication and return 401.
+app.get('/api/favicon.ico', (_req: Request, res: Response) => res.sendStatus(204));
 // joinRoutes contains routes like /kelas/:id/join-requests and /join-requests/:id
 app.use('/api', joinRoutes);
 app.use('/api', uploadRoutes);
