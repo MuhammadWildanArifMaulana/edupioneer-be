@@ -122,12 +122,8 @@ app.use('/api/absensi', absensiRoutes);
 app.use('/api/diskusi', diskusiRoutes);
 app.use('/api/nilai', nilaiRoutes);
 app.use('/api/spp', sppRoutes);
-// joinRoutes contains routes like /kelas/:id/join-requests and /join-requests/:id
-app.use('/api', joinRoutes);
-app.use('/api', uploadRoutes);
-app.use('/api', adminRoutes);
-
-// Health check endpoint
+// Public health and debug endpoints must be registered before any routers
+// mounted at '/api' that apply router-level middleware (e.g., router.use(authMiddleware)).
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({
     status: 'ok',
@@ -136,13 +132,17 @@ app.get('/api/health', (req: Request, res: Response) => {
   });
 });
 
-// Debug endpoint - test request parsing
+// Debug endpoint - test request parsing and headers
 app.post('/api/debug/echo', (req: Request, res: Response) => {
   res.json({
     body: req.body,
     headers: req.headers,
   });
 });
+// joinRoutes contains routes like /kelas/:id/join-requests and /join-requests/:id
+app.use('/api', joinRoutes);
+app.use('/api', uploadRoutes);
+app.use('/api', adminRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
