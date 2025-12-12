@@ -40,14 +40,13 @@ import uploadRoutes from './routes/upload.routes';
 
 const app: Express = express();
 
-// Export app early for serverless platforms so `require('../dist/server')`
-// doesn't fail if DB initialization later throws. Vercel expects a sync
-// export at require-time (it will still call the handler per-request).
-if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
-  // @ts-ignore - using CommonJS export in TS file for serverless compatibility
-  module.exports = app;
-  console.log('[SERVER] Early-exported express app for serverless runtime');
-}
+// Export app immediately so consumer `require()` gets the handler without
+// triggering DB initialization. We'll only run `initServer()` when the
+// file is executed directly (e.g. `node dist/server.js`) — not when it's
+// required by serverless platforms like Vercel.
+// @ts-ignore - using CommonJS export in TS file for compatibility
+module.exports = app;
+console.log('[SERVER] Express app exported for require()');
 
 // Security & Parsing Middleware
 app.use(helmet());
@@ -150,9 +149,6 @@ const initServer = async () => {
     // If running on Vercel (or other serverless platforms), export a handler
     // instead of calling app.listen. Vercel sets the VERCEL env var for builds.
     if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
-      // Export the express `app` as the module handler so serverless platforms
-      // like Vercel can invoke it directly. Express apps are valid request
-      // handlers (req, res) and can be exported directly.
       // @ts-ignore
       module.exports = app;
       console.log('[SERVER] Exported express app as serverless handler');
@@ -194,7 +190,8 @@ const initServer = async () => {
   }
 };
 
-if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
+if (require.main === module) {
+  // Running directly (node dist/server.js) — initialize DB and start server.
   initServer().catch((error) => {
     console.error(
       '[FATAL] Failed to initialize server:',
@@ -206,7 +203,6 @@ if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
     process.exit(1);
   });
 } else {
-  // In serverless environments we export the `app` early and skip
-  // running the long-lived server initialization (DB checks/listen).
-  console.log('[SERVER] Running in serverless mode — skipping initServer');
+  // Required as a module (e.g., by Vercel) — do not init server here.
+  console.log('[SERVER] Required as module — skipping initServer');
 }
