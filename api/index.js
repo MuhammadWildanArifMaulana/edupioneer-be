@@ -7,21 +7,21 @@
 const app = require('../dist/server');
 
 module.exports = (req, res) => {
-	try {
-		if (!req.url || typeof req.url !== 'string') {
-			return app(req, res);
-		}
-		if (!req.url.startsWith('/api')) {
-			if (req.url === '/' || req.url === '') {
-				req.url = '/api/health';
-			} else {
-				req.url = '/api' + (req.url.startsWith('/') ? req.url : `/${req.url}`);
-			}
-		}
-		return app(req, res);
-	} catch (err) {
-		console.error('Error in api/index.js handler rewrite:', err);
-		res.statusCode = 500;
-		res.end('Internal Server Error');
-	}
+  try {
+    if (!req.url || typeof req.url !== 'string') {
+      return app(req, res);
+    }
+    if (!req.url.startsWith('/api')) {
+      if (req.url === '/' || req.url === '') {
+        req.url = '/api/health';
+      } else {
+        req.url = '/api' + (req.url.startsWith('/') ? req.url : `/${req.url}`);
+      }
+    }
+    return app(req, res);
+  } catch (err) {
+    console.error('Error in api/index.js handler rewrite:', err);
+    res.statusCode = 500;
+    res.end('Internal Server Error');
+  }
 };
