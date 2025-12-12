@@ -116,21 +116,32 @@ app.use((req: Request, res: Response) => {
 // Global error handler
 app.use(errorHandler);
 
-// Start server
+// Start server or export handler for serverless platforms (e.g., Vercel)
 const PORT = config.port;
 
-// Test database connection on startup
 const initServer = async () => {
   try {
     await query('SELECT 1');
     console.log('[DB] Database connection successful');
+
+    // If running on Vercel (or other serverless platforms), export a handler
+    // instead of calling app.listen. Vercel sets the VERCEL env var for builds.
+    if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+      // Export the express `app` as the module handler so serverless platforms
+      // like Vercel can invoke it directly. Express apps are valid request
+      // handlers (req, res) and can be exported directly.
+      // @ts-ignore
+      module.exports = app;
+      console.log('[SERVER] Exported express app as serverless handler');
+      return null as unknown as ReturnType<typeof app.listen>;
+    }
 
     const server = app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
       console.log(`Environment: ${config.nodeEnv}`);
     });
 
-    // Handle unhandled rejections
+    // Handle unhandled rejections and uncaught exceptions in long-running server
     process.on('unhandledRejection', (reason: unknown) => {
       console.error(
         '[FATAL] Unhandled rejection:',
@@ -151,6 +162,11 @@ const initServer = async () => {
       error instanceof Error ? error.message : String(error),
     );
     console.error('[DB] Make sure PostgreSQL is running and database exists');
+    // In serverless environment, throwing allows the platform to surface the error
+    // rather than exiting the process.
+    if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+      throw error;
+    }
     process.exit(1);
   }
 };
@@ -163,5 +179,9 @@ initServer().catch((error) => {
   if (error instanceof Error) {
     console.error('[FATAL] Stack:', error.stack);
   }
+    if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+      // re-throw to fail deployment invocation
+      throw error;
+    }
   process.exit(1);
 });
