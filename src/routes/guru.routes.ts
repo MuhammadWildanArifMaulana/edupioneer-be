@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import * as GuruController from '@controllers/GuruController';
-import { authMiddleware } from '@middlewares/authMiddleware';
-import { roleMiddleware } from '@middlewares/roleMiddleware';
-import { validateRequest } from '@middlewares/validateRequest';
+import * as GuruController from '../controllers/GuruController';
+import { authMiddleware } from '../middlewares/authMiddleware';
+import { roleMiddleware } from '../middlewares/roleMiddleware';
+import { validateRequest } from '../middlewares/validateRequest';
 
 const router = Router();
 

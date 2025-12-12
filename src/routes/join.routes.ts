@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import * as JoinController from '@controllers/JoinRequestController';
-import { authMiddleware } from '@middlewares/authMiddleware';
+import * as JoinController from '../controllers/JoinRequestController';
+import { authMiddleware } from '../middlewares/authMiddleware';
 
 const router = Router();
 
