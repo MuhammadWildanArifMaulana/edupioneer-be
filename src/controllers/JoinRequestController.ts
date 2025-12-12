@@ -4,6 +4,7 @@ import { AuthRequest } from '@middlewares/authMiddleware';
 import { sendSuccess, sendError } from '@utils/response';
 import { getSiswaByUserId } from '@services/SiswaService';
 import { getGuruByUserId } from '@services/GuruService';
+import { query } from '@utils/db';
 
 export const create = async (req: AuthRequest, res: Response) => {
   try {
@@ -35,9 +36,7 @@ export const listByKelas = async (req: AuthRequest, res: Response) => {
       const guru = await getGuruByUserId(req.user.id);
       if (!guru) return sendError(res, 'Forbidden', 403);
       // verify guru teaches kelas
-      const gm = await (
-        await import('@utils/db')
-      ).query('SELECT id FROM guru_mapel WHERE guru_id = $1 AND kelas_id = $2', [guru.id, kelasId]);
+      const gm = await query('SELECT id FROM guru_mapel WHERE guru_id = $1 AND kelas_id = $2', [guru.id, kelasId]);
       if (gm.rows.length === 0) return sendError(res, 'Forbidden', 403);
     }
 
@@ -79,9 +78,7 @@ export const decide = async (req: AuthRequest, res: Response) => {
 
     if (req.user.role !== 'admin') {
       const guru = await getGuruByUserId(req.user.id);
-      const gm = await (
-        await import('@utils/db')
-      ).query('SELECT id FROM guru_mapel WHERE guru_id = $1 AND kelas_id = $2', [guru.id, kelasId]);
+      const gm = await query('SELECT id FROM guru_mapel WHERE guru_id = $1 AND kelas_id = $2', [guru.id, kelasId]);
       if (gm.rows.length === 0) return sendError(res, 'Forbidden', 403);
     }
 

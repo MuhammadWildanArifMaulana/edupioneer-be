@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '@middlewares/authMiddleware';
 import * as GuruService from '@services/GuruService';
+import * as UserService from '@services/UserService';
 import { sendSuccess, sendError, sendPaginated } from '@utils/response';
 
 export const getAll = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -39,12 +40,22 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
   try {
     const { user_id, nama } = req.body;
 
-    if (!user_id || !nama) {
-      sendError(res, 'Missing required fields', 400);
+    if (!user_id) {
+      sendError(res, 'Missing required field: user_id', 400);
       return;
     }
 
-    const guru = await GuruService.createGuru({ user_id, nama });
+    // The `guru` table only stores `user_id`. If a display name was provided,
+    // update the corresponding `users` record instead.
+    const guru = await GuruService.createGuru({ user_id });
+    if (nama) {
+      try {
+        await UserService.updateUser(user_id, { name: nama });
+      } catch (e) {
+        // Non-fatal: if updating the user name fails, continue and return created guru
+        console.warn('Failed to update user name during guru creation', e);
+      }
+    }
     sendSuccess(res, guru, 'Guru created successfully', 201);
   } catch (error) {
     sendError(res, 'Failed to create guru', 400, error);
