@@ -3,26 +3,26 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { config } from '@config/env';
-import { errorHandler } from '@middlewares/errorHandler';
-import { query } from '@utils/db';
+import { config } from './config/env';
+import { errorHandler } from './middlewares/errorHandler';
+import { query } from './utils/db';
 
 // Import routes
-import authRoutes from '@routes/auth.routes';
-import usersRoutes from '@routes/users.routes';
-import kelasRoutes from '@routes/kelas.routes';
-import mapelRoutes from '@routes/mapel.routes';
-import guruRoutes from '@routes/guru.routes';
-import siswaRoutes from '@routes/siswa.routes';
-import materiRoutes from '@routes/materi.routes';
-import tugasRoutes from '@routes/tugas.routes';
-import absensiRoutes from '@routes/absensi.routes';
-import diskusiRoutes from '@routes/diskusi.routes';
-import nilaiRoutes from '@routes/nilai.routes';
-import sppRoutes from '@routes/spp.routes';
-import joinRoutes from '@routes/join.routes';
-import adminRoutes from '@routes/admin.routes';
-import uploadRoutes from '@routes/upload.routes';
+import authRoutes from './routes/auth.routes';
+import usersRoutes from './routes/users.routes';
+import kelasRoutes from './routes/kelas.routes';
+import mapelRoutes from './routes/mapel.routes';
+import guruRoutes from './routes/guru.routes';
+import siswaRoutes from './routes/siswa.routes';
+import materiRoutes from './routes/materi.routes';
+import tugasRoutes from './routes/tugas.routes';
+import absensiRoutes from './routes/absensi.routes';
+import diskusiRoutes from './routes/diskusi.routes';
+import nilaiRoutes from './routes/nilai.routes';
+import sppRoutes from './routes/spp.routes';
+import joinRoutes from './routes/join.routes';
+import adminRoutes from './routes/admin.routes';
+import uploadRoutes from './routes/upload.routes';
 
 const app: Express = express();
 
@@ -179,9 +179,9 @@ initServer().catch((error) => {
   if (error instanceof Error) {
     console.error('[FATAL] Stack:', error.stack);
   }
-    if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
-      // re-throw to fail deployment invocation
-      throw error;
-    }
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    // re-throw to fail deployment invocation
+    throw error;
+  }
   process.exit(1);
 });
