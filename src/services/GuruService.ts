@@ -3,7 +3,7 @@ import { query } from '@utils/db';
 export const getAllGuru = async (page: number = 1, limit: number = 10) => {
   const offset = (page - 1) * limit;
   const result = await query(
-    'SELECT g.id, g.user_id, g.nama, u.email, u.role FROM guru g JOIN users u ON g.user_id = u.id ORDER BY g.nama LIMIT $1 OFFSET $2',
+    'SELECT g.id, g.user_id, u.name as nama, u.email, u.role FROM guru g JOIN users u ON g.user_id = u.id ORDER BY u.name LIMIT $1 OFFSET $2',
     [limit, offset],
   );
   const countResult = await query('SELECT COUNT(*) as total FROM guru');
@@ -15,7 +15,7 @@ export const getAllGuru = async (page: number = 1, limit: number = 10) => {
 
 export const getGuruById = async (id: string) => {
   const result = await query(
-    'SELECT g.id, g.user_id, g.nama, u.email, u.role FROM guru g JOIN users u ON g.user_id = u.id WHERE g.id = $1',
+    'SELECT g.id, g.user_id, u.name as nama, u.email, u.role FROM guru g JOIN users u ON g.user_id = u.id WHERE g.id = $1',
     [id],
   );
   if (result.rows.length === 0) {
@@ -32,29 +32,28 @@ export const getGuruMapel = async (guruId: string) => {
   return result.rows;
 };
 
-export const createGuru = async (data: { user_id: string; nama: string }) => {
+export const getGuruByUserId = async (userId: string) => {
   const result = await query(
-    'INSERT INTO guru (user_id, nama) VALUES ($1, $2) RETURNING id, user_id, nama',
-    [data.user_id, data.nama],
+    'SELECT g.id, g.user_id, u.name as nama, u.email, u.role FROM guru g JOIN users u ON g.user_id = u.id WHERE g.user_id = $1',
+    [userId],
   );
+  if (result.rows.length === 0) {
+    throw new Error('Guru not found for given user id');
+  }
+  return result.rows[0];
+};
+
+export const createGuru = async (data: { user_id: string }) => {
+  const result = await query('INSERT INTO guru (user_id) VALUES ($1) RETURNING id, user_id', [
+    data.user_id,
+  ]);
   return result.rows[0];
 };
 
 export const updateGuru = async (id: string, data: Record<string, any>) => {
-  if (data.nama === undefined) {
-    throw new Error('No valid fields to update');
-  }
-
-  const result = await query(
-    'UPDATE guru SET nama = $1 WHERE id = $2 RETURNING id, user_id, nama',
-    [data.nama, id],
-  );
-
-  if (result.rows.length === 0) {
-    throw new Error('Guru not found');
-  }
-
-  return result.rows[0];
+  // The `guru` table no longer stores a separate `nama` column.
+  // Updates to the guru's name should be performed on the `users` table.
+  throw new Error('No updatable fields on guru; update the corresponding user record instead');
 };
 
 export const deleteGuru = async (id: string) => {

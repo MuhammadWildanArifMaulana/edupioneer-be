@@ -49,7 +49,7 @@ export const register = async (payload: RegisterPayload) => {
 
   // If role is guru, create record in guru table
   if (role === 'guru') {
-    await query('INSERT INTO guru (user_id, nama) VALUES ($1, $2)', [user.id, name]);
+    await query('INSERT INTO guru (user_id) VALUES ($1)', [user.id]);
   }
 
   return {

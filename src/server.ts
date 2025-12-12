@@ -20,6 +20,9 @@ import absensiRoutes from '@routes/absensi.routes';
 import diskusiRoutes from '@routes/diskusi.routes';
 import nilaiRoutes from '@routes/nilai.routes';
 import sppRoutes from '@routes/spp.routes';
+import joinRoutes from '@routes/join.routes';
+import adminRoutes from '@routes/admin.routes';
+import uploadRoutes from '@routes/upload.routes';
 
 const app: Express = express();
 
@@ -79,6 +82,10 @@ app.use('/api/absensi', absensiRoutes);
 app.use('/api/diskusi', diskusiRoutes);
 app.use('/api/nilai', nilaiRoutes);
 app.use('/api/spp', sppRoutes);
+// joinRoutes contains routes like /kelas/:id/join-requests and /join-requests/:id
+app.use('/api', joinRoutes);
+app.use('/api', uploadRoutes);
+app.use('/api', adminRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {

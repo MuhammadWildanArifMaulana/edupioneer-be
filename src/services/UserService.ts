@@ -33,7 +33,7 @@ export const createUser = async (data: {
 
   // If role is guru, create record in guru table
   if (role === 'guru') {
-    await query('INSERT INTO guru (user_id, nama) VALUES ($1, $2)', [user.id, name]);
+    await query('INSERT INTO guru (user_id) VALUES ($1)', [user.id]);
   }
 
   return {
@@ -48,7 +48,7 @@ export const createUser = async (data: {
 export const getAllUsers = async (page: number = 1, limit: number = 10) => {
   const offset = (page - 1) * limit;
   const result = await query(
-    'SELECT id, email, name, role, created_at FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2',
+    'SELECT id, email, name, role, avatar_url, phone, created_at FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2',
     [limit, offset],
   );
   const countResult = await query('SELECT COUNT(*) as total FROM users');
@@ -59,9 +59,10 @@ export const getAllUsers = async (page: number = 1, limit: number = 10) => {
 };
 
 export const getUserById = async (id: string) => {
-  const result = await query('SELECT id, email, name, role, created_at FROM users WHERE id = $1', [
-    id,
-  ]);
+  const result = await query(
+    'SELECT id, email, name, role, avatar_url, phone, created_at FROM users WHERE id = $1',
+    [id],
+  );
   if (result.rows.length === 0) {
     throw new Error('User not found');
   }
@@ -69,7 +70,7 @@ export const getUserById = async (id: string) => {
 };
 
 export const updateUser = async (id: string, data: Record<string, any>) => {
-  const allowedFields = ['name', 'email'];
+  const allowedFields = ['name', 'email', 'phone', 'avatar_url'];
   const updates: string[] = [];
   const values: any[] = [];
   let paramIndex = 1;
@@ -88,7 +89,7 @@ export const updateUser = async (id: string, data: Record<string, any>) => {
 
   values.push(id);
   const result = await query(
-    `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id, email, name, role, created_at`,
+    `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id, email, name, role, avatar_url, phone, created_at`,
     values,
   );
 
@@ -105,4 +106,28 @@ export const deleteUser = async (id: string) => {
     throw new Error('User not found');
   }
   return result.rows[0];
+};
+
+export const changeUserPassword = async (
+  id: string,
+  currentPassword: string,
+  newPassword: string,
+) => {
+  // fetch user
+  const userRes = await query('SELECT id, password FROM users WHERE id = $1', [id]);
+  if (userRes.rows.length === 0) {
+    throw new Error('User not found');
+  }
+  const user = userRes.rows[0];
+
+  // compare current password
+  const { comparePassword, hashPassword } = await import('@config/bcrypt');
+  const isValid = await comparePassword(currentPassword, user.password);
+  if (!isValid) {
+    throw new Error('Current password is incorrect');
+  }
+
+  const hashed = await hashPassword(newPassword);
+  await query('UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2', [hashed, id]);
+  return true;
 };

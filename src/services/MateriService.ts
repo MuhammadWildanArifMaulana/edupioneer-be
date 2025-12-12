@@ -7,7 +7,7 @@ export const getAllMateri = async (guruMapelId?: string, page: number = 1, limit
 
   if (guruMapelId) {
     result = await query(
-      'SELECT m.id, m.guru_mapel_id, m.judul, m.deskripsi, m.file_url, m.created_at FROM materi m WHERE m.guru_mapel_id = $1 ORDER BY m.created_at DESC LIMIT $2 OFFSET $3',
+      'SELECT m.id, m.guru_mapel_id, m.judul, m.deskripsi, m.file_url, m.gambar, m.created_at FROM materi m WHERE m.guru_mapel_id = $1 ORDER BY m.created_at DESC LIMIT $2 OFFSET $3',
       [guruMapelId, limit, offset],
     );
     countResult = await query('SELECT COUNT(*) as total FROM materi WHERE guru_mapel_id = $1', [
@@ -15,7 +15,7 @@ export const getAllMateri = async (guruMapelId?: string, page: number = 1, limit
     ]);
   } else {
     result = await query(
-      'SELECT m.id, m.guru_mapel_id, m.judul, m.deskripsi, m.file_url, m.created_at FROM materi m ORDER BY m.created_at DESC LIMIT $1 OFFSET $2',
+      'SELECT m.id, m.guru_mapel_id, m.judul, m.deskripsi, m.file_url, m.gambar, m.created_at FROM materi m ORDER BY m.created_at DESC LIMIT $1 OFFSET $2',
       [limit, offset],
     );
     countResult = await query('SELECT COUNT(*) as total FROM materi');
@@ -29,7 +29,7 @@ export const getAllMateri = async (guruMapelId?: string, page: number = 1, limit
 
 export const getMateriById = async (id: string) => {
   const result = await query(
-    'SELECT id, guru_mapel_id, judul, deskripsi, file_url, created_at FROM materi WHERE id = $1',
+    'SELECT id, guru_mapel_id, judul, deskripsi, file_url, gambar, created_at FROM materi WHERE id = $1',
     [id],
   );
   if (result.rows.length === 0) {
@@ -43,10 +43,17 @@ export const createMateri = async (data: {
   judul: string;
   deskripsi?: string;
   file_url?: string;
+  gambar?: string;
 }) => {
   const result = await query(
-    'INSERT INTO materi (guru_mapel_id, judul, deskripsi, file_url, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING id, guru_mapel_id, judul, deskripsi, file_url, created_at',
-    [data.guru_mapel_id, data.judul, data.deskripsi || null, data.file_url || null],
+    'INSERT INTO materi (guru_mapel_id, judul, deskripsi, file_url, gambar, created_at) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id, guru_mapel_id, judul, deskripsi, file_url, gambar, created_at',
+    [
+      data.guru_mapel_id,
+      data.judul,
+      data.deskripsi || null,
+      data.file_url || null,
+      data.gambar || null,
+    ],
   );
   return result.rows[0];
 };
@@ -60,7 +67,7 @@ export const recordMateriView = async (data: { materi_id: string; siswa_id: stri
 };
 
 export const updateMateri = async (id: string, data: Record<string, any>) => {
-  const allowedFields = ['judul', 'deskripsi', 'file_url'];
+  const allowedFields = ['judul', 'deskripsi', 'file_url', 'gambar'];
   const updates: string[] = [];
   const values: any[] = [];
   let paramIndex = 1;
@@ -79,7 +86,7 @@ export const updateMateri = async (id: string, data: Record<string, any>) => {
 
   values.push(id);
   const result = await query(
-    `UPDATE materi SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id, guru_mapel_id, judul, deskripsi, file_url, created_at`,
+    `UPDATE materi SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id, guru_mapel_id, judul, deskripsi, file_url, gambar, created_at`,
     values,
   );
 

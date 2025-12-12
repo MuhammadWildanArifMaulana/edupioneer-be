@@ -2,21 +2,52 @@ import { query } from '@utils/db';
 
 export const getAllKelas = async (page: number = 1, limit: number = 10) => {
   const offset = (page - 1) * limit;
+  // Return kelas plus an optional guru name (if any) fetched from guru_mapel -> guru
   const result = await query(
-    'SELECT id, nama, tahun_ajaran, semester FROM kelas ORDER BY tahun_ajaran DESC LIMIT $1 OFFSET $2',
+    `SELECT
+       k.id,
+       k.nama,
+       k.tahun_ajaran,
+       k.semester,
+       (
+          SELECT u.name
+          FROM guru g
+          JOIN users u ON g.user_id = u.id
+          JOIN guru_mapel gm ON gm.guru_id = g.id
+          WHERE gm.kelas_id = k.id
+          LIMIT 1
+       ) AS guru
+     FROM kelas k
+     ORDER BY k.tahun_ajaran DESC
+     LIMIT $1 OFFSET $2`,
     [limit, offset],
   );
   const countResult = await query('SELECT COUNT(*) as total FROM kelas');
   return {
     data: result.rows,
-    total: parseInt(countResult.rows[0].total),
+    total: Number.parseInt(countResult.rows[0].total),
   };
 };
 
 export const getKelasById = async (id: string) => {
-  const result = await query('SELECT id, nama, tahun_ajaran, semester FROM kelas WHERE id = $1', [
-    id,
-  ]);
+  const result = await query(
+    `SELECT
+      k.id,
+      k.nama,
+      k.tahun_ajaran,
+      k.semester,
+      (
+        SELECT u.name
+        FROM guru g
+        JOIN users u ON g.user_id = u.id
+        JOIN guru_mapel gm ON gm.guru_id = g.id
+        WHERE gm.kelas_id = k.id
+        LIMIT 1
+      ) AS guru
+     FROM kelas k
+     WHERE k.id = $1`,
+    [id],
+  );
   if (result.rows.length === 0) {
     throw new Error('Kelas not found');
   }

@@ -96,6 +96,7 @@ CREATE TABLE materi (
   judul VARCHAR(255) NOT NULL,
   deskripsi TEXT,
   file_url VARCHAR(500),
+  gambar VARCHAR(500),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (guru_mapel_id) REFERENCES guru_mapel(id) ON DELETE CASCADE

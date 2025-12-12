@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '@middlewares/authMiddleware';
 import * as TugasService from '@services/TugasService';
+import * as GuruService from '@services/GuruService';
 import * as SiswaService from '@services/SiswaService';
 import { sendSuccess, sendError, sendPaginated } from '@utils/response';
 
@@ -94,6 +95,23 @@ export const getSubmits = async (req: AuthRequest, res: Response): Promise<void>
     sendSuccess(res, submits, 'Tugas submits fetched successfully');
   } catch (error) {
     sendError(res, 'Failed to fetch tugas submits', 500, error);
+  }
+};
+
+export const getSubmissionsForGuru = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      sendError(res, 'Unauthorized', 401);
+      return;
+    }
+
+    // Map authenticated user -> guru record
+    const guru = await GuruService.getGuruByUserId(req.user.id);
+    const submissions = await TugasService.getSubmissionsForGuru(guru.id);
+    sendSuccess(res, submissions, 'Submissions fetched successfully');
+  } catch (error) {
+    console.error('Error fetching submissions for guru:', error);
+    sendError(res, 'Failed to fetch submissions', 500, error);
   }
 };
 

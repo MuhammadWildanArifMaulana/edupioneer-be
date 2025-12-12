@@ -28,7 +28,7 @@ export const getById = async (req: AuthRequest, res: Response): Promise<void> =>
 
 export const create = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { guru_mapel_id, judul, deskripsi, file_url } = req.body;
+    const { guru_mapel_id, judul, deskripsi, file_url, gambar } = req.body;
 
     if (!guru_mapel_id || !judul) {
       sendError(res, 'Missing required fields', 400);
@@ -40,6 +40,7 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
       judul,
       deskripsi,
       file_url,
+      gambar,
     });
     sendSuccess(res, materi, 'Materi created successfully', 201);
   } catch (error) {

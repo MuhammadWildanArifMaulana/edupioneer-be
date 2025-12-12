@@ -14,7 +14,7 @@ router.get('/:id', MateriController.getById);
 
 router.post(
   '/',
-  roleMiddleware(['guru']),
+  roleMiddleware(['guru', 'admin']),
   validateRequest([
     { field: 'guru_mapel_id', type: 'string', required: true },
     { field: 'judul', type: 'string', required: true, minLength: 3 },
@@ -24,7 +24,7 @@ router.post(
 
 router.post('/:id/view', MateriController.recordView);
 
-router.put('/:id', roleMiddleware(['guru']), MateriController.update);
+router.put('/:id', roleMiddleware(['guru', 'admin']), MateriController.update);
 
 router.delete('/:id', roleMiddleware(['guru', 'admin']), MateriController.delete_);
 

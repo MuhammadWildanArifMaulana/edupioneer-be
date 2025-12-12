@@ -51,6 +51,28 @@ export const getAbsenisiBySiswa = async (siswaId: string) => {
   return result.rows;
 };
 
+export const getAllAbsensi = async (kelasId: string | undefined, page = 1, limit = 10) => {
+  const offset = (page - 1) * limit;
+  if (kelasId) {
+    const result = await query(
+      'SELECT id, guru_mapel_id, kelas_id, tanggal, created_at FROM absensi WHERE kelas_id = $1 ORDER BY tanggal DESC LIMIT $2 OFFSET $3',
+      [kelasId, limit, offset],
+    );
+    const countRes = await query('SELECT COUNT(*) as total FROM absensi WHERE kelas_id = $1', [
+      kelasId,
+    ]);
+    const total = Number(countRes.rows[0]?.total || '0');
+    return { data: result.rows, total };
+  }
+  const result = await query(
+    'SELECT id, guru_mapel_id, kelas_id, tanggal, created_at FROM absensi ORDER BY tanggal DESC LIMIT $1 OFFSET $2',
+    [limit, offset],
+  );
+  const countRes = await query('SELECT COUNT(*) as total FROM absensi');
+  const total = Number(countRes.rows[0]?.total || '0');
+  return { data: result.rows, total };
+};
+
 export const deleteAbsensi = async (id: string) => {
   const result = await query('DELETE FROM absensi WHERE id = $1 RETURNING id', [id]);
   if (result.rows.length === 0) {

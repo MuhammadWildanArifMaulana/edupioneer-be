@@ -73,13 +73,23 @@ export const getBySiswa = async (req: AuthRequest, res: Response): Promise<void>
   try {
     const siswa_id = req.query.siswa_id as string | undefined;
 
-    if (!siswa_id) {
-      sendError(res, 'siswa_id query parameter is required', 400);
+    // If siswa_id provided, return per-siswa absensi
+    if (siswa_id) {
+      const absensi = await AbsensiService.getAbsenisiBySiswa(siswa_id);
+      sendSuccess(res, absensi, 'Siswa absensi fetched successfully');
       return;
     }
 
-    const absensi = await AbsensiService.getAbsenisiBySiswa(siswa_id);
-    sendSuccess(res, absensi, 'Siswa absensi fetched successfully');
+    // Otherwise, treat as a list endpoint with optional kelasId and pagination
+    const kelasId = req.query.kelasId as string | undefined;
+    const page = Number.parseInt(req.query.page as string) || 1;
+    const limit = Number.parseInt(req.query.limit as string) || 10;
+
+    const { data, total } = await AbsensiService.getAllAbsensi(kelasId, page, limit);
+    // send paginated response
+    // import sendPaginated dynamically to avoid circular imports
+    const { sendPaginated } = await import('@utils/response');
+    sendPaginated(res, data, total, page, limit, 'Absensi fetched successfully');
   } catch (error) {
     sendError(res, 'Failed to fetch siswa absensi', 500, error);
   }

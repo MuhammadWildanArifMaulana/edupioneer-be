@@ -10,6 +10,9 @@ router.use(authMiddleware);
 
 router.get('/', TugasController.getAll);
 
+// Get submissions across all tugas for the authenticated guru
+router.get('/submissions', roleMiddleware(['guru']), TugasController.getSubmissionsForGuru);
+
 router.get('/:id', TugasController.getById);
 
 router.get('/:id/submits', TugasController.getSubmits);

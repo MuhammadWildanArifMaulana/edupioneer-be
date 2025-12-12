@@ -71,6 +71,31 @@ export const getTugasSubmits = async (tugasId: string) => {
   return result.rows;
 };
 
+export const getSubmissionsForGuru = async (guruId: string) => {
+  const result = await query(
+    `SELECT
+       ts.id,
+       ts.tugas_id,
+       ts.siswa_id,
+       ts.file_url,
+       ts.jawaban,
+       ts.submitted_at,
+       s.nama as siswa_nama,
+       t.kelas_id,
+       t.judul as tugas_judul,
+       k.nama as kelas_nama
+     FROM tugas_submit ts
+     JOIN tugas t ON ts.tugas_id = t.id
+     JOIN guru_mapel gm ON t.guru_mapel_id = gm.id
+     JOIN siswa s ON ts.siswa_id = s.id
+     JOIN kelas k ON t.kelas_id = k.id
+     WHERE gm.guru_id = $1
+     ORDER BY ts.submitted_at DESC`,
+    [guruId],
+  );
+  return result.rows;
+};
+
 export const getSubmissionById = async (id: string) => {
   const result = await query(
     'SELECT id, tugas_id, siswa_id, file_url, jawaban, submitted_at FROM tugas_submit WHERE id = $1',

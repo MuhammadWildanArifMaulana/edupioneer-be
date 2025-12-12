@@ -3,6 +3,9 @@ import * as UserController from '@controllers/UserController';
 import { authMiddleware } from '@middlewares/authMiddleware';
 import { roleMiddleware } from '@middlewares/roleMiddleware';
 import { validateRequest } from '@middlewares/validateRequest';
+import multer from 'multer';
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = Router();
 
@@ -29,9 +32,23 @@ router.put(
   validateRequest([
     { field: 'email', type: 'email' },
     { field: 'name', type: 'string', minLength: 3 },
+    { field: 'phone', type: 'string', required: false },
   ]),
   UserController.update,
 );
+
+// Change password endpoint
+router.put(
+  '/:id/password',
+  validateRequest([
+    { field: 'current_password', type: 'string', required: true, minLength: 6 },
+    { field: 'new_password', type: 'string', required: true, minLength: 6 },
+  ]),
+  UserController.changePassword,
+);
+
+// Upload avatar (multipart/form-data) - expects field name `avatar`
+router.put('/:id/avatar', upload.single('avatar'), UserController.uploadAvatar);
 
 router.delete('/:id', roleMiddleware(['admin']), UserController.delete_);
 
