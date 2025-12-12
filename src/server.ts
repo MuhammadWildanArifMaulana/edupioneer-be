@@ -44,7 +44,11 @@ const app: Express = express();
 // proxy so `req.ip` and forwarded headers are respected by middleware
 // such as `express-rate-limit` which otherwise throws when the
 // 'Forwarded' header is present but being ignored.
-app.set('trust proxy', true);
+// Trust a single proxy (Vercel's edge) rather than enabling permissive
+// trust for all proxies. This avoids express-rate-limit's permissive
+// trust proxy validation while still allowing `X-Forwarded-For` to be
+// used to derive the client IP when behind one known proxy.
+app.set('trust proxy', 1);
 
 // Export app immediately so consumer `require()` gets the handler without
 // triggering DB initialization. We'll only run `initServer()` when the
