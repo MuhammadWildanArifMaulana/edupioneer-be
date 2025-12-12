@@ -13,7 +13,12 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
   try {
     const authHeader = req.headers.authorization;
 
+    // Optional debug logging to inspect incoming headers when troubleshooting.
     if (!authHeader) {
+      if (process.env.AUTH_DEBUG === 'true') {
+        console.warn('[AUTH][DEBUG] Missing Authorization header for', req.method, req.originalUrl);
+        console.warn('[AUTH][DEBUG] Request headers:', JSON.stringify(req.headers));
+      }
       sendError(res, 'Missing authorization header', 401);
       return;
     }
