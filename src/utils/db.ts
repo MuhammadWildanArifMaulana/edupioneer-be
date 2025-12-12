@@ -2,14 +2,7 @@ import { Pool, PoolClient, QueryResult } from 'pg';
 import { config } from '../config/env';
 
 const pool = new Pool({
-  host: config.db.host,
-  port: config.db.port,
-  user: config.db.username,
-  password: config.db.password,
-  database: config.db.database,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionString: process.env.DATABASE_URL,
 });
 
 pool.on('error', (err) => {

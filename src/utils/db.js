@@ -2,14 +2,7 @@ const { Pool } = require('pg');
 
 // Read DB config from env to avoid importing TypeScript-only modules
 const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: Number.parseInt(process.env.DB_PORT || '5432', 10),
-  user: process.env.DB_USERNAME || process.env.PGUSER || 'postgres',
-  password: process.env.DB_PASSWORD || process.env.PGPASSWORD || '',
-  database: process.env.DB_DATABASE || 'edupioneer_db',
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionString: process.env.DATABASE_URL,
 };
 
 // Enable SSL when explicitly requested by environment variables.
