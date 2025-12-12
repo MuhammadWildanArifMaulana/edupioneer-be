@@ -1,4 +1,4 @@
-import { query } from '@utils/db';
+import { query } from '../utils/db';
 
 export const getAllGuru = async (page: number = 1, limit: number = 10) => {
   const offset = (page - 1) * limit;

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { sendError } from '@utils/response';
+import { sendError } from '../utils/response';
 
 export interface ValidationRule {
   field: string;

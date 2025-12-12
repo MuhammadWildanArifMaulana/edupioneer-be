@@ -1,5 +1,5 @@
-import { query } from '@utils/db';
-import { hashPassword } from '@config/bcrypt';
+import { query } from '../utils/db';
+import { hashPassword } from '../config/bcrypt';
 
 export const createUser = async (data: {
   email: string;

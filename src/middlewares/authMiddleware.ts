@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyToken, TokenPayload } from '@config/jwt';
-import { sendError } from '@utils/response';
+import { verifyToken, TokenPayload } from '../config/jwt';
+import { sendError } from '../utils/response';
 
 export interface AuthRequest extends Request {
   user?: TokenPayload;

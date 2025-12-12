@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from './authMiddleware';
-import { sendError } from '@utils/response';
+import { sendError } from '../utils/response';
 
 export const roleMiddleware = (allowedRoles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {

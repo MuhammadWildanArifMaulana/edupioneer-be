@@ -1,4 +1,4 @@
-import { query } from '@utils/db';
+import { query } from '../utils/db';
 import { getSiswaByUserId } from './SiswaService';
 import { getGuruByUserId } from './GuruService';
 

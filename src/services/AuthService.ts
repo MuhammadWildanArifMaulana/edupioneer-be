@@ -1,6 +1,6 @@
-import { query } from '@utils/db';
-import { hashPassword, comparePassword } from '@config/bcrypt';
-import { generateToken } from '@config/jwt';
+import { query } from '../utils/db';
+import { hashPassword, comparePassword } from '../config/bcrypt';
+import { generateToken } from '../config/jwt';
 
 export interface RegisterPayload {
   email: string;

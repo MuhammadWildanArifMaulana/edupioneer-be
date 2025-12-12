@@ -1,8 +1,8 @@
 import { Response } from 'express';
-import { AuthRequest } from '@middlewares/authMiddleware';
-import * as GuruService from '@services/GuruService';
-import * as UserService from '@services/UserService';
-import { sendSuccess, sendError, sendPaginated } from '@utils/response';
+import { AuthRequest } from '../middlewares/authMiddleware';
+import * as GuruService from '../services/GuruService';
+import * as UserService from '../services/UserService';
+import { sendSuccess, sendError, sendPaginated } from '../utils/response';
 
 export const getAll = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
