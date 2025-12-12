@@ -142,7 +142,21 @@ app.post('/api/debug/echo', (req: Request, res: Response) => {
 
 // No-op favicon handler so requests to `/favicon.ico` don't get routed
 // into routers that require authentication and return 401.
-app.get('/api/favicon.ico', (_req: Request, res: Response) => res.sendStatus(204));
+// Serve a small inline SVG favicon for requests rewritten to `/api/*` on Vercel.
+// Returning an actual image avoids 401s and provides a nicer UX than 204.
+const _faviconSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#0ea5a4"/>
+  <text x="50%" y="55%" font-size="36" font-family="Arial, Helvetica, sans-serif" fill="#fff" text-anchor="middle" alignment-baseline="middle">E</text>
+</svg>`;
+
+app.get('/api/favicon.ico', (_req: Request, res: Response) => {
+  res.type('image/svg+xml').send(_faviconSvg);
+});
+
+app.get('/api/favicon.png', (_req: Request, res: Response) => {
+  res.type('image/svg+xml').send(_faviconSvg);
+});
 // joinRoutes contains routes like /kelas/:id/join-requests and /join-requests/:id
 app.use('/api', joinRoutes);
 app.use('/api', uploadRoutes);
